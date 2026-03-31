@@ -1,7 +1,7 @@
 from utils.alph import ALPH, ALPH_REV
 
 class CaesarCipher:
-    def encode(self, plain_text, offset=3, encode=True, mod=26):
+    def process_text(self, input_text, offset=3, encode=True, mod=26):
         """
         Encodes or decodes text using the Caesar Cipher algorithm.
 
@@ -15,13 +15,13 @@ class CaesarCipher:
             str: The resulting cipher text or plain text, or None if input is empty.
         """
         
-        if not plain_text:
+        if not input_text:
             return None
         
         shift = offset if encode else -offset
         text = []
 
-        for char in plain_text:
+        for char in input_text:
             lower_char = char.lower()
 
             # Check if the character exists in our alphabet mapping

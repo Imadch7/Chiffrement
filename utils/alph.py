@@ -26,3 +26,22 @@ class Alphabet:
         monoalph_decrypt = dict(zip(shuffled, ascii_lowercase))
 
         return monoalph_encrypt, monoalph_decrypt
+    
+    def validate_monoalphabet(self, alph):
+        """
+        Validates that a substitution alphabet is bijective.
+        
+        Checks that:
+        1. Each source letter maps to exactly one destination letter.
+        2. No two source letters map to the same destination letter.
+        
+        Args:
+            alph (dict): The alphabet mapping to validate.
+            
+        Returns:
+            bool: True if valid, False otherwise.
+        """
+        
+        # If the number of unique values is the same as the number of keys,
+        # then every key has a unique, one-to-one mapping.
+        return len(set(alph.values())) == len(alph)
