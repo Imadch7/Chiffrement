@@ -1,12 +1,15 @@
-# Byte-compiled / optimized / DLL files
+# Byte-compiled / optimized / DLL files / Cache files
 __pycache__/
 *.py[codz]
 *$py.class
+*.pyc
+*.pyo
+*.pyd
 
 # C extensions
 *.so
 
-# Distribution / packaging
+# Distribution / packaging / build folders
 .Python
 build/
 develop-eggs/
@@ -25,6 +28,13 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+
+# Virtual Environement
+include/
+Lib/
+Scripts/
+share/
+pyvenv.cfg
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
