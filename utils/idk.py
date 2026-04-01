@@ -3,7 +3,7 @@ from itertools import islice
 from contextlib import suppress
 from math import isqrt
 
-class IDK:
+class IDONTKNOWWHATTHISIS:
     def iter_index(self, iterable, value, start=0, stop=None):
         """Return indices where a value occurs in a sequence or iterable"""
         # iter_index("AABCADEAF", "A") → 0 1 4 7
