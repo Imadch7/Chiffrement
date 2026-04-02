@@ -95,6 +95,6 @@ from crypto.playfair import playfair
 # print(_build_diagram(key))
 # text = "FOX"
 # print(_prepare_text(text))
-a = playfair("MAGICSQUARES", "test playfair")
-b = playfair(a, "test playfair", False)
+a = playfair("Hide the gold under the carpet", "neso academy")
+b = playfair("ODZFQSEZSONTSW", "neso APP", False)
 print(a, b)

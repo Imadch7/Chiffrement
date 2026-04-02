@@ -1,13 +1,10 @@
 from utils.alph import ALPH
 
-def playfair(plain_text, key, encode=True):
-    if not plain_text or not key:
+def playfair(input_text, key, encode=True):
+    if not input_text or not key:
         raise ValueError("Input text and key must be provided")
-    
-    key = key.upper().replace(" ", "").replace("W", "V")
-    plain_text = plain_text.upper().replace(" ", "").replace("W", "V")
 
-    diagram, processed_text, mapping = _prepare_input(plain_text, key)
+    diagram, processed_text, mapping = _prepare_input(input_text, key)
     shift = 1 if encode else -1
     text = []
 
@@ -71,7 +68,8 @@ def _build_diagram(key):
     if not key:
         return None           
 
-    alph = [char.upper() for char in ALPH.keys() if char.upper() != "W"]
+    key = key.upper().replace(" ", "").replace("J", "I")
+    alph = [char.upper() for char in ALPH.keys() if char.upper() != "J"]
     grid = []
     seen = set()
 
@@ -98,6 +96,7 @@ def _prepare_text(text):
 
     arr = []
     idx = 0
+    text = text.upper().replace(" ", "").replace("J", "I")
 
     while idx < len(text):
         c1 = text[idx]
@@ -115,7 +114,7 @@ def _prepare_text(text):
         else:
             # Pad the end if there is a lone character
             filler = "Q" if c1 == "X" else "X"
-            arr.append(c1, filler)
+            arr.append((c1, filler))
             idx += 1
 
     return arr
