@@ -11,6 +11,7 @@ from utils.file_handler import load_json_file
 import numpy as np
 from utils.alph import ALPH, ALPH_REV
 from string import ascii_lowercase
+from utils.math import adjugate_matrix, get_inverse_brute_force
 
 def hill(input_text, path, encode=True):
     if not input_text or not path:
@@ -68,3 +69,31 @@ def _prepare_text(text):
 
 print(ALPH)
 print(hill("d","d"))
+
+K = np.array([[9, 4], [5, 7]])
+
+def _get_decryption_key(matrix, mod=26):
+    # 1. Calculate the determinant
+    # We use round() because np.linalg.det returns a float
+    det = int(round(np.linalg.det(matrix))) % mod
+    
+    # 2. Find the modular inverse of the determinant
+    # This is the "x" where (det * x) % 26 == 1
+    det_inv = get_inverse_brute_force(det, mod)
+    
+    if det_inv is None:
+        raise ValueError(f"Matrix is not invertible mod {mod}. Determinant {det} has no inverse.")
+
+    # 3. Get the adjugate matrix (Transpose of the Cofactor matrix)
+    # Your adjugate_matrix(matrix) already calls cofactor(matrix).T
+    adj = adjugate_matrix(matrix)
+    
+    # 4. Multiply the adjugate by the modular inverse of the determinant
+    # Then apply modulo 26 to every element
+    dec_key = (det_inv * adj) % mod
+    
+    # Convert to standard integers so we don't have numpy types lurking
+    return dec_key.astype(int)
+
+J = _get_decryption_key(K)
+print(J)

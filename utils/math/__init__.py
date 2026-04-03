@@ -1,5 +1,6 @@
 from .prime import is_prime, sieve_of_eratosthenes
 from .factors import get_factors, get_factors_gen
+from .matrix import adjugate_matrix, cofactor_matrix
 from .operations import (
     get_gcd_euclid,
     get_gcd_euclid_fast,

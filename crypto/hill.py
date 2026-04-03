@@ -1,8 +1,9 @@
 import numpy as np
 from utils.alph import ALPH, ALPH_REV
 from utils.file_handler import load_json_file
+from utils.math import adjugate_matrix, get_inverse_brute_force
 
-def hill(path):
+def hill(path, encode=True):
     if not path:
         raise ValueError("A proper input text and a proper file path must be provided")
     
@@ -10,13 +11,16 @@ def hill(path):
     if not data:
         raise ValueError("Could not fetch data from JSON file")
     
-    # Recover the key matrix
-    matrix = data["matrix"]
-    key = np.array(matrix)
-
     # Recover the plain text
-    text = data["text"]
-    text = _prepare_text(text)
+    text = _prepare_text(data["text"])
+    if not text:
+        raise ValueError("A proper text must be provided")
+        
+    # Recover the key matrix
+    matrix = np.array(data["matrix"])
+
+    # Determine the key
+    key = matrix if encode else _get_decryption_key(matrix)
 
     size = key.shape[0]
     r = len(text) % size
@@ -33,9 +37,7 @@ def hill(path):
         res = np.dot(key, block) % 26
         encrypted.extend(res.astype(int).tolist())
 
-    encrypted_text = _get_text(encrypted)
-
-    return encrypted_text
+    return _get_text(encrypted)
 
 def _get_text(txt):
     a = []
@@ -50,3 +52,17 @@ def _prepare_text(text):
         num = ALPH[char]
         txt.append(num)
     return txt
+
+def _get_decryption_key(matrix, mod=26):
+    det = int(round(np.linalg.det(matrix))) % mod
+
+    det_inv = get_inverse_brute_force(det, mod)
+
+    if det_inv is None:
+        raise ValueError(f"Matrix is not invertible mod {mod}. Determinant {det} has no inverse.")
+    
+    adj = adjugate_matrix(matrix)
+
+    dec_key = (det_inv * adj) % mod
+
+    return dec_key.astype(int)
