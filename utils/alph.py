@@ -1,10 +1,10 @@
-from string import ascii_lowercase
+from string import ascii_uppercase
 from random import sample
 
 # Alphabet mapping
 # ALPH = {"a": 0, "b": 1, ...}
 # ALPH_REV = {0: "a", 1: "b", ...}
-ALPH_REV = dict(enumerate(ascii_lowercase))
+ALPH_REV = dict(enumerate(ascii_uppercase))
 ALPH = {char: idx for idx, char in ALPH_REV.items()}
 
 def generate_random_monoalphabet():
@@ -16,13 +16,13 @@ def generate_random_monoalphabet():
     """
 
     # Create a shuffled list of all 26 letters
-    shuffled = sample(ascii_lowercase, len(ascii_lowercase))
+    shuffled = sample(ascii_uppercase, len(ascii_uppercase))
 
     # Map "a" → "random_char", "b" → "another_random_char"
-    monoalph_encrypt = dict(zip(ascii_lowercase, shuffled))
+    monoalph_encrypt = dict(zip(ascii_uppercase, shuffled))
 
     # Map 'random_char' → "a", "another_random_char" → "b"
-    monoalph_decrypt = dict(zip(shuffled, ascii_lowercase))
+    monoalph_decrypt = dict(zip(shuffled, ascii_uppercase))
 
     return monoalph_encrypt, monoalph_decrypt
 

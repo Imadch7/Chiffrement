@@ -12,6 +12,9 @@ def load_json_file(path):
         dict: The parsed JSON data, or an empty dict if an error occurs.
     """
 
+    if not os.path.exists(path):
+        raise ValueError(f"File path {path} does not exist")
+
     _, file_ext = os.path.splitext(path)
     if not file_ext or file_ext.lower() != ".json":
         raise ValueError(f"File {path}, is not a JSON file ❌")

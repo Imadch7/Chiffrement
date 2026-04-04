@@ -39,9 +39,9 @@ def hill(path, encode=True):
 
     return _get_text(encrypted)
 
-def _get_text(txt):
+def _get_text(text):
     a = []
-    for num in txt:
+    for num in text:
         char = ALPH_REV[num]
         a.append(char)
     return "".join(a)
