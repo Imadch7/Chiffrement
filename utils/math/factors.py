@@ -48,7 +48,7 @@ def get_factors_gen(num):
     A generator that yields prime factors of a given number one by one.
 
     It would be used like this:
-        res = Counter(Math.get_factors_gen(100))
+        res = Counter(get_factors_gen(100))
 
     Args:
         num (int): The positive integer to factorize.

@@ -1,36 +1,28 @@
 import numpy as np
-from utils.alph import ALPH, ALPH_REV
-from utils.file_handler import load_json_file
+from string import ascii_uppercase as alph
+from utils.math.operations import get_gcd_euclid_fast
 from utils.math import adjugate_matrix, get_inverse_brute_force
 
-def hill(path, encode=True):
-    if not path:
-        raise ValueError("A proper input text and a proper file path must be provided")
+def hill_cipher(plain_text, matrix, encode):
+    plain_text = _prepare_text(plain_text)
+    matrix = np.array(matrix)
     
-    data = load_json_file(path)
-    if not data:
-        raise ValueError("Could not fetch data from JSON file")
+    if np.linalg.det(matrix) == 0:
+        raise ValueError("Matrix must be invertible")
     
-    # Recover the plain text
-    text = _prepare_text(data["text"])
-    if not text:
-        raise ValueError("A proper text must be provided")
-        
-    # Recover the key matrix
-    matrix = np.array(data["matrix"])
+    if get_gcd_euclid_fast(np.linalg.det(matrix), 26) != 1:
+        raise ValueError("Wrong marix entered")
 
-    # Determine the key
     key = matrix if encode else _get_decryption_key(matrix)
 
     size = key.shape[0]
-    r = len(text) % size
+    r = len(plain_text) % size
 
     if r != 0:
         padding = size - r
-        text.extend([ALPH["X"]] * padding)
+        plain_text.extend([alph.index("X")] * padding)
 
-    # Reshape the flat list of numbers into block of size 'size'
-    blocks = np.array(text).reshape(-1, size)
+    blocks = np.array(plain_text).reshape(-1, size)
 
     encrypted = []
     for block in blocks:
@@ -42,14 +34,14 @@ def hill(path, encode=True):
 def _get_text(text):
     a = []
     for num in text:
-        char = ALPH_REV[num]
+        char = alph[num]
         a.append(char)
     return "".join(a)
 
 def _prepare_text(text):
     txt = []
     for char in text:
-        num = ALPH[char]
+        num = alph.index(char)
         txt.append(num)
     return txt
 

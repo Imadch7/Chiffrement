@@ -1,10 +1,7 @@
-from utils.alph import ALPH
+from string import ascii_uppercase as alph
 
-def playfair(input_text, key, encode=True):
-    if not input_text or not key:
-        raise ValueError("Input text and key must be provided")
-
-    diagram, processed_text, mapping = _prepare_input(input_text, key)
+def playfair_cipher(plain_text, key, encode):
+    diagram, processed_text, mapping = _prepare_input(plain_text, key)
     shift = 1 if encode else -1
     text = []
 
@@ -46,6 +43,7 @@ def playfair(input_text, key, encode=True):
 
 def _prepare_input(input_text, key):
     diagram = _build_diagram(key)
+    
     if not diagram:
         raise ValueError(f"Something went wrong when building the Playfair diagram:\n{_display_grid(diagram)}")
 
@@ -69,12 +67,12 @@ def _build_diagram(key):
         return None           
 
     key = key.upper().replace(" ", "").replace("J", "I")
-    alph = [char.upper() for char in ALPH.keys() if char.upper() != "J"]
+    a = [char.upper() for char in alph if char.upper() != "J"]
     grid = []
     seen = set()
 
     # Process the key first, then the alphabet
-    for char in (key + "".join(alph)):
+    for char in (key + "".join(a)):
         if char.isalpha() and char not in seen:
             seen.add(char)
             grid.append(char)

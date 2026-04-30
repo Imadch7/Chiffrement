@@ -1,32 +1,23 @@
-from utils.file_handler import load_json_file
-from utils.alph import ALPH, ALPH_REV
+from string import ascii_uppercase as alph
+from utils.alph import _get_key_frequency_analysis
 
-def vigenere(path, encode=True):
-    if not path:
-        raise ValueError("A proper input text and a proper file path must be provided")
-    
-    data = load_json_file(path)
-    if not data:
-        raise ValueError("Could not fetch data from JSON file")
-    
-    # Recover the plain text
-    text = data["text"].upper().replace(" ", "")
+def vigenere_cipher(plain_text, key, encode):
+    plain_text = plain_text.upper().replace(" ", "")
+    key = key.upper().replace(" ", "") if encode else _get_key_frequency_analysis(plain_text)
 
-    # Recover the key
-    key = data["key"].upper().replace(" ", "")
     key_length = len(key)
 
-    txt = []
-    for idx in range(len(text)):
-        char_val = ALPH[text[idx]]
+    text = []
+    for idx in range(len(plain_text)):
+        char_val = alph.index(plain_text[idx])
         key_char = key[idx % key_length]
-        key_val = ALPH[key_char]
+        key_val = alph.index(key_char)
 
         if encode:
             new_val = (char_val + key_val) % 26
         else:
             new_val = (char_val - key_val) % 26
 
-        txt.append(ALPH_REV[new_val])
+        text.append(alph[new_val])
 
-    return "".join(txt)
+    return "".join(text)

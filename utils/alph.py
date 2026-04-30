@@ -1,11 +1,27 @@
-from string import ascii_uppercase
+from collections import Counter
+from string import ascii_uppercase as alph
 from random import sample
+from .math import get_factors_gen, get_factors
 
-# Alphabet mapping
-# ALPH = {"a": 0, "b": 1, ...}
-# ALPH_REV = {0: "a", 1: "b", ...}
-ALPH_REV = dict(enumerate(ascii_uppercase))
-ALPH = {char: idx for idx, char in ALPH_REV.items()}
+def _get_key_frequency_analysis(text):
+    factors = Counter(get_factors(list(text)))
+    common_factor = factors.most_common(1)[0]
+    arr = []
+
+    for idx in range(common_factor):
+        column = text[idx::common_factor]
+        arr.append(column)
+
+    frequency = [Counter(txt) for txt in text]
+    most_frequent = [counter.most_common(1)[0] for counter in frequency]
+    key = []
+
+    for obj in most_frequent:
+        char = obj[0]
+        new_char = alph[(alph.index(char) - alph.index("E")) % 26]
+        key.append(new_char)
+
+    return "".join(key)
 
 def generate_random_monoalphabet():
     """
@@ -16,13 +32,13 @@ def generate_random_monoalphabet():
     """
 
     # Create a shuffled list of all 26 letters
-    shuffled = sample(ascii_uppercase, len(ascii_uppercase))
+    shuffled = sample(alph, len(alph))
 
     # Map "a" → "random_char", "b" → "another_random_char"
-    monoalph_encrypt = dict(zip(ascii_uppercase, shuffled))
+    monoalph_encrypt = dict(zip(alph, shuffled))
 
     # Map 'random_char' → "a", "another_random_char" → "b"
-    monoalph_decrypt = dict(zip(shuffled, ascii_uppercase))
+    monoalph_decrypt = dict(zip(shuffled, alph))
 
     return monoalph_encrypt, monoalph_decrypt
 
