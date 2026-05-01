@@ -1,7 +1,7 @@
 from string import ascii_uppercase as alph
 
 def process_text(plain_text, offset, encode, mod=26):
-    if not encode and offset > 0:
+    if (not encode and offset > 0) or (encode and offset < 0):
         raise ValueError("Illogical arguments passed")
     
     text = []

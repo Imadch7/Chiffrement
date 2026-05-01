@@ -35,29 +35,26 @@ def load_json_file(path):
         print(f"Permission to read {path} denied")
         return {}
     
-def save_to_json_file(filename, data):
+def save_to_json_file(path, data):
     """
     Saves data specifically in JSON format within the ./usr_data directory.
     """
 
-    if not filename:
-        raise ValueError(f"A file path must be passed, {filename} not accepted")
+    if not path:
+        raise ValueError(f"A file path must be passed, {path} not accepted")
     
     if data is None:
         raise ValueError(f"Data must be passed.")
     
-    if not os.path.exists("./usr_data"):
-        os.makedirs("./usr_data")
-    
-    # Use os.path.join to handle slashes correctly regardless of OS
-    full_path = os.path.join("./usr_data", filename)
-    
+    if not os.path.exists("./output"):
+        os.makedirs("./output")
+        
     try:
-        with open(full_path, "w", encoding="utf-8") as file:
+        with open(path, "w") as file:
             json.dump(data, file, indent=4)
         
     except PermissionError:
-        print(f"Permission to write to ({full_path}) has been denied")
+        print(f"Permission to write to ({path}) has been denied")
     
 def save_to_file(filename, data, ext=".txt"):
     """
