@@ -1,18 +1,16 @@
 from string import ascii_uppercase as alph
 
-def process_text(plain_text, offset, encode, mod=26):
-    if (not encode and offset > 0) or (encode and offset < 0):
-        raise ValueError("Illogical arguments passed")
-    
-    text = []
+def caesar_cipher(text: str, key: int, encode: bool, mod: int = 26):    
+    direction = 1 if encode else -1
+    shift = (key * direction) % mod
+    res = []
 
-    for char in plain_text:
-        upper_char = char.upper()
-
-        if upper_char.isalpha():
-            new_char = alph[(alph.index(upper_char) + offset) % mod]
-            text.append(new_char.upper() if char.isupper() else new_char.lower())
+    for char in text:
+        if char.isalpha():
+            idx = alph.index(char.upper())
+            new_char = alph[(idx + shift) % mod]
+            res.append(new_char if char.isupper() else new_char.lower())
         else:
-            text.append(char)
+            res.append(char)
 
-    return "".join(text)
+    return "".join(res)

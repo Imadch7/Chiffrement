@@ -3,8 +3,8 @@ from pathlib import Path
 from datetime import datetime
 from utils.file_handler import load_json_file, save_to_json_file
 
-from crypto.caesar import process_text
-from crypto.affine import encrypt_text, decrypt_text
+from crypto.caesar import caesar_cipher
+from crypto.affine import affine_encrypt, affine_decrypt
 from crypto.hill import hill_cipher
 from crypto.playfair import playfair_cipher
 from crypto.vigenere import vigenere_cipher
@@ -20,7 +20,7 @@ def caesar(
     """Run a Caesar cipher using a JSON config file, and save the result to a output/caesar_res.json file"""
 
     data = load_json_file(config_path)
-    text = process_text(data.get("plain_text"), data.get("offset"), encode=not decrypt)
+    text = caesar_cipher(data.get("text"), data.get("key"), encode=not decrypt)
     typer.secho("Result: ", fg=typer.colors.GREEN)
     typer.secho(f"{text}", fg=typer.colors.BLUE)
     save_to_json_file("output/caesar_res.json", { "date": datetime.now(), "text": text })
@@ -35,9 +35,9 @@ def affine(
     data = load_json_file(config_path)
 
     if not decrypt:
-        text = encrypt_text(data.get("plain_text"), data.get("a"), data.get("b"))
+        text = affine_encrypt(data.get("text"), data.get("a"), data.get("b"))
     else:
-        text = decrypt_text(data.get("plain_text"), data.get("a"), data.get("b"))
+        text = affine_decrypt(data.get("text"), data.get("a"), data.get("b"))
 
     save_to_json_file("output/affine_res.json", { "date": datetime.now(), "text": text })
     typer.secho("Result: ", fg=typer.colors.GREEN)
@@ -51,7 +51,7 @@ def hill(
     """Run a Hill cipher using a JSON config file, and save the result to a output/hill_res.json file"""
 
     data = load_json_file(config_path)
-    text = hill_cipher(data.get("plain_text"), data.get("matrix"), encode=not decrypt)
+    text = hill_cipher(data.get("text"), data.get("matrix"), encode=not decrypt)
     save_to_json_file("output/affine_res.json", { "date": datetime.now(), "text": text })
     typer.secho("Result: ", fg=typer.colors.GREEN)
     typer.secho(f"{text}", fg=typer.colors.BLUE)
@@ -64,7 +64,7 @@ def playfair(
     """Run a Playfair cipher using a JSON config file, and save the result to a output/playfair_res.json file"""
 
     data = load_json_file(config_path)
-    text = playfair_cipher(data.get("plain_text"), data.get("key"), encode=not decrypt)
+    text = playfair_cipher(data.get("text"), data.get("key"), encode=not decrypt)
     save_to_json_file("output/affine_res.json", { "date": datetime.now(), "text": text })
     typer.secho("Result: ", fg=typer.colors.GREEN)
     typer.secho(f"{text}", fg=typer.colors.BLUE)
@@ -77,7 +77,7 @@ def vigenere(
     """Run a Vigenere cipher using a JSON config file, and save the result to a output/vigenere_res.json file"""
 
     data = load_json_file(config_path)
-    text = vigenere_cipher(data.get("plain_text"), data.get("key"), encode=not decrypt)
+    text = vigenere_cipher(data.get("text"), data.get("key"), encode=not decrypt)
     save_to_json_file("output/affine_res.json", { "date": datetime.now(), "text": text })
     typer.secho("Result: ", fg=typer.colors.GREEN)
     typer.secho(f"{text}", fg=typer.colors.BLUE)

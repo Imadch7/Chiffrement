@@ -1,60 +1,46 @@
-import numpy as np
+from numpy import array
+from sympy import Matrix, gcd
 from string import ascii_uppercase as alph
-from utils.math.operations import get_gcd_euclid_fast
-from utils.math import adjugate_matrix, get_inverse_brute_force
 
-def hill_cipher(plain_text, matrix, encode):
-    plain_text = _prepare_text(plain_text)
-    matrix = np.array(matrix)
+def hill_cipher(text: str, matrix: list, encode: bool, mod: int = 26):
+    # Convert key to a SymPy Matrix for exact modular math
+    sm_key = Matrix(matrix)
     
-    if np.linalg.det(matrix) == 0:
-        raise ValueError("Matrix must be invertible")
+    if not sm_key.is_square:
+        raise ValueError("Key matrix must be square")
     
-    if get_gcd_euclid_fast(np.linalg.det(matrix), 26) != 1:
-        raise ValueError("Wrong marix entered")
-
-    key = matrix if encode else _get_decryption_key(matrix)
-
-    size = key.shape[0]
-    r = len(plain_text) % size
-
-    if r != 0:
-        padding = size - r
-        plain_text.extend([alph.index("X")] * padding)
-
-    blocks = np.array(plain_text).reshape(-1, size)
-
-    encrypted = []
-    for block in blocks:
-        res = np.dot(key, block) % 26
-        encrypted.extend(res.astype(int).tolist())
-
-    return _get_text(encrypted)
-
-def _get_text(text):
-    a = []
-    for num in text:
-        char = alph[num]
-        a.append(char)
-    return "".join(a)
-
-def _prepare_text(text):
-    txt = []
-    for char in text:
-        num = alph.index(char)
-        txt.append(num)
-    return txt
-
-def _get_decryption_key(matrix, mod=26):
-    det = int(round(np.linalg.det(matrix))) % mod
-
-    det_inv = get_inverse_brute_force(det, mod)
-
-    if det_inv is None:
-        raise ValueError(f"Matrix is not invertible mod {mod}. Determinant {det} has no inverse.")
+    size = sm_key.shape[0]
+    det = sm_key.det()
     
-    adj = adjugate_matrix(matrix)
+    # Validation
+    if det == 0:
+        raise ValueError("Matrix determinant is 0 and cannot be inverted")
+    
+    if gcd(int(det), mod) != 1:
+        raise ValueError(f"Matrix determinant ({det % mod}) is not coprime with {mod}. Decryption will be impossible {"Encrypting now..." if encode else ""}")
 
-    dec_key = (det_inv * adj) % mod
+    # Determine the actual Key Matrix to use
+    sm_key = sm_key if encode else sm_key.inv_mod(mod)
 
-    return dec_key.astype(int)
+    # Convert back to NumPy for fast numerical operations
+    key = array(sm_key).astype(int)
+
+    # Prepare text
+    text = text.upper().replace(" ", "")
+    # This replaces the old _prepare_text(text: str) function
+    indices = [alph.index(c) for c in text if c in alph]
+
+    # Padding
+    padding = (size - len(indices) % size) % size
+    indices.extend([alph.index('X')] * padding)
+
+    # Process in Blocks using NumPy Matrix Multiplication
+    # Reshape into (N, size) blocks
+    input_blocks = array(indices).reshape(-1, size)
+
+    # We multiply: (Block @ Key.T) % mod
+    # Transposing the key is necessary if the blocks are row vectors
+    res_indices = (input_blocks @ key.T) % mod
+
+    # Convert back to text
+    return "".join(alph[idx] for idx in res_indices.flatten())

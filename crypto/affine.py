@@ -1,33 +1,41 @@
 from string import ascii_uppercase as alph
-from utils.math import get_gcd_euclid_fast
+from sympy import mod_inverse, gcd
 
-def encrypt_text(plain_text, a, b, mod=26):
-    text = []
-    
-    if get_gcd_euclid_fast(a, mod) != 1:
+def affine_encrypt(text: str, a: int, b: int, mod: int = 26):    
+    if gcd(a, mod) != 1:
         raise ValueError(f"Multiplier 'a' ({a}) must be coprime to ({mod})")
+    
+    try:
+        mod_inverse(a, mod)
+    except ValueError:
+        print(f"No modular inverse for 'a' ({a}) mod {mod}. Decryption later is impossible. Now encrypting...")
 
-    for char in plain_text:
-        upper_char = char.upper()
-
-        if upper_char in alph:
-            new_char = alph[(a * alph.index(upper_char) + b) % mod]
-            text.append(new_char.upper() if char.isupper() else new_char.lower())
+    res = []
+    for char in text:
+        if char.isalpha():
+            # E(x) = (ax + b) mod m
+            idx = alph.index(char.upper())
+            new_char = alph[(a * idx + b) % mod]
+            res.append(new_char if char.isupper() else new_char.lower())
         else:
-            text.append(char)
+            res.append(char)
 
-    return "".join(text)
+    return "".join(res)
 
-def decrypt_text(plain_text, a, b, mod=26):
-    text = []
-
-    for char in plain_text:
-        upper_char = char.upper()
-
-        if upper_char in alph:
-            new_char = alph[a * (alph.index(upper_char) - b) % mod]
-            text.append(new_char.upper() if char.isupper() else new_char.lower())
+def affine_decrypt(text: str, a: int, b: int, mod: int = 26):
+    try:
+        a_inv = mod_inverse(a, mod)
+    except ValueError:
+        raise ValueError(f"No modular inverse for 'a' ({a}) mod {mod}. Decryption impossible")
+    
+    res = []
+    for char in text:
+        if char.isalpha():
+            # D(y) = a_inv * (y - b) mod m
+            idx = alph.index(char.upper())
+            new_char = alph[(a_inv * (idx - b)) % mod]
+            res.append(new_char if char.isupper() else new_char.lower())
         else:
-            text.append(char)
+            res.append(char)
 
-    return "".join(text)
+    return "".join(res)

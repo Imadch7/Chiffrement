@@ -1,23 +1,19 @@
+from numpy import array, tile
 from string import ascii_uppercase as alph
-from utils.alph import _get_key_frequency_analysis
 
-def vigenere_cipher(plain_text, key, encode):
-    plain_text = plain_text.upper().replace(" ", "")
-    key = key.upper().replace(" ", "") if encode else _get_key_frequency_analysis(plain_text)
+def vigenere_cipher(text: str, key: str, encode: bool):
+    text = "".join([char for char in text.upper() if char.isalpha()])
+    key = "".join([char for char in key if char.isalpha()])
 
-    key_length = len(key)
+    if not key:
+        raise ValueError("Keu must contain at least one alphabetic character")
+    
+    text_arr = array([alph.index(char) for char in text])
+    key_arr = array([alph.index(char) for char in key])
 
-    text = []
-    for idx in range(len(plain_text)):
-        char_val = alph.index(plain_text[idx])
-        key_char = key[idx % key_length]
-        key_val = alph.index(key_char)
+    key_stream = tile(key_arr, (len(text_arr) // len(key_arr)) + 1)[:len(text_arr)]
 
-        if encode:
-            new_val = (char_val + key_val) % 26
-        else:
-            new_val = (char_val - key_val) % 26
+    multiplier = 1 if encode else -1
+    res_indices = (text_arr + (multiplier * key_stream)) % 26
 
-        text.append(alph[new_val])
-
-    return "".join(text)
+    return "".join(alph[idx] for idx in res_indices)

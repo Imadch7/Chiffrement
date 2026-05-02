@@ -1,13 +1,16 @@
-from os import urandom
+import secrets
+import numpy as np
 
-def otp_encode(text):
+def otp_encode(text: str):
     text_bytes = text.encode('utf-8')
-    pad = urandom(len(text_bytes))
-    cipher_bytes = bytes([p ^ t for p, t in zip(pad, text_bytes)])
-    return cipher_bytes.hex(), pad.hex()
+    pad_bytes = secrets.token_bytes(len(text_bytes))
+    t_arr = np.frombuffer(text_bytes, dtype=np.uint8)
+    p_arr = np.frombuffer(pad_bytes, dtype=np.uint)
+    cipher_bytes = np.bitwise_xor(t_arr, p_arr).tobytes()
+    return cipher_bytes.hex(), pad_bytes.hex()
 
-def otp_decode(text, pad):
-    pad = bytes.fromhex(pad)
-    text = bytes.fromhex(text)
-    plain = bytes([p ^ t for p, t in zip(pad, text)])
-    return plain.decode('utf-8')
+def otp_decode(cipher_hex: str, pad_hex: str):
+    c_arr = np.frombuffer(bytes.fromhex(cipher_hex), dtype=np.uint8)
+    p_arr = np.frombuffer(bytes.fromhex(pad_hex), dtype=np.uint8)
+    plain_bytes = np.bitwise_xor(c_arr, p_arr).tobytes()
+    return plain_bytes.decode('utf-8')
