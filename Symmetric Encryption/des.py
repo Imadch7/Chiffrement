@@ -92,7 +92,16 @@ class DES:
             if isinstance(plaintext, bytes):
                 plaintext_binary = bin(int.from_bytes(plaintext, 'big'))[2:].zfill(len(plaintext) * 8)
             else:
-                plaintext_binary = plaintext
+                # If plaintext is a string, encode it to bytes first
+                if isinstance(plaintext, str):
+                    plaintext = plaintext.encode('utf-8')
+                plaintext_binary = bin(int.from_bytes(plaintext, 'big'))[2:].zfill(len(plaintext) * 8)
+            
+            # Ensure plaintext_binary is exactly 64 bits (8 bytes)
+            if len(plaintext_binary) < 64:
+                plaintext_binary = plaintext_binary.zfill(64)
+            elif len(plaintext_binary) > 64:
+                plaintext_binary = plaintext_binary[:64]
             
             # Initial Permutation
             initial_permutation_table = self.generate_initial_permutation_table()
