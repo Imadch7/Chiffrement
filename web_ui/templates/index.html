@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberChef - Chiffrement Edition</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Load Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Fira+Code&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar: Operations -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Operations</h2>
+            </div>
+            <div class="search-box">
+                <input type="text" id="op-search" placeholder="Search operations...">
+            </div>
+            <ul class="op-list" id="op-list">
+                <li class="op-item" draggable="true" data-op="SHA-256">SHA-256</li>
+                <li class="op-item" draggable="true" data-op="MD5">MD5</li>
+                <li class="op-item" draggable="true" data-op="AES Encrypt" data-args="key">AES Encrypt</li>
+                <li class="op-item" draggable="true" data-op="DES Encrypt" data-args="key">DES Encrypt</li>
+                <li class="op-item" draggable="true" data-op="RC4 Encrypt" data-args="key">RC4 Encrypt</li>
+                <li class="op-item" draggable="true" data-op="Bluetooth E0" data-args="key">Bluetooth E0</li>
+                <li class="op-item" draggable="true" data-op="Vigenere" data-args="key">Vigenere</li>
+                <li class="op-item" draggable="true" data-op="Cesar" data-args="shift">Cesar</li>
+                <li class="op-item" draggable="true" data-op="Affine" data-args="a,b">Affine</li>
+                <li class="op-item" draggable="true" data-op="Hill" data-args="k11,k12,k21,k22">Hill Cipher</li>
+                <li class="op-item" draggable="true" data-op="RSA-PSS Sign">RSA-PSS Sign</li>
+                <li class="op-item" draggable="true" data-op="Diffie-Hellman">Diffie-Hellman</li>
+            </ul>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top: Recipe (The Pipeline) -->
+            <section class="recipe-area">
+                <div class="section-header">
+                    <h2>Recipe</h2>
+                    <button id="clear-recipe" class="btn btn-secondary">Clear</button>
+                </div>
+                <div class="recipe-container" id="recipe-container">
+                    <div class="recipe-placeholder">Drag operations here or Double Click</div>
+                </div>
+            </section>
+
+            <!-- Bottom: Input / Output -->
+            <section class="io-area">
+                <!-- Input Panel -->
+                <div class="panel input-panel">
+                    <div class="section-header">
+                        <h2>Input</h2>
+                    </div>
+                    <textarea id="input-text" class="code-font" placeholder="Enter your data here..."></textarea>
+                </div>
+
+                <!-- Output Panel -->
+                <div class="panel output-panel">
+                    <div class="section-header">
+                        <h2>Output</h2>
+                        <button id="bake-btn" class="btn btn-primary">Bake!</button>
+                    </div>
+                    <textarea id="output-text" class="code-font" readonly placeholder="Output will appear here..."></textarea>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
