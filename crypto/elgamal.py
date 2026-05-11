@@ -1,9 +1,10 @@
 from os.path import exists
-from sympy import randprime, gcd, mod_inverse
+from secrets import randbelow
+from sympy import randprime, mod_inverse
 from sympy.ntheory import isprime
 from utils.file_handler import load_json_file, save_to_json_file
 
-def rsa_encode(public_key: tuple[int] | None, message: str, bits: int, path_to_keys: str, to_str: bool = False):
+def elgamal_encode(public_key: tuple[int] | None, message: str, bits: int, path_to_keys: str):
     if bits not in (512, 1024, 2048):
         print(f"Number of bits passed is wrong")
         return
@@ -14,22 +15,23 @@ def rsa_encode(public_key: tuple[int] | None, message: str, bits: int, path_to_k
         return
     
     if not public_key:
-        path = path_to_keys if path_to_keys else "data/rsa_keys.json"
+        path = path_to_keys if path_to_keys else "data/elgamal_keys.json"
         keys = _key_gen(path, bits)
         if not keys:
             return
         pub = keys["public"]
-        n, e = pub.get("n"), pub.get("e")
+        y, p, g = pub.get("y"), pub.get("p"), pub.get("g")
     else:
-        n, e = public_key
+        y, p, g = public_key
 
+    k = randbelow(p - 2) + 1
+    C1 = pow(g, k, p)
     M = int.from_bytes(msg_bytes, "big")
+    C2 = (M * pow(y, k, p))  % p
 
-    C = pow(M, e, n)
+    return C1, C2
 
-    return C.to_bytes(bits // 8, "big").hex() if to_str else C, (n, e), bits
-
-def rsa_decode(private_key: tuple[int] | None, cipher, bits: int, to_str: bool = False):
+def elgamal_decode(private_key: tuple[int] | None, C1, C2, bits: int, to_str: bool = False):
     if bits not in (512, 1024, 2048):
         print(f"Number of bits passed is wrong")
         return
@@ -38,16 +40,11 @@ def rsa_decode(private_key: tuple[int] | None, cipher, bits: int, to_str: bool =
         print("Cannot decrypt the message with a private key")
         return
     else:
-        n, d = private_key
-    
-    if isinstance(cipher, str):
-        cipher_bytes = bytes.fromhex(cipher)
-    else:
-        cipher_bytes = cipher
+        s, p = private_key
 
-    C = int.from_bytes(cipher_bytes, "big")
-
-    M = pow(C, d, n)
+    R = pow(C1, s, p)
+    R_inv = mod_inverse(R, p)
+    M = (C2 * R_inv) % p
 
     decrypted_bytes = M.to_bytes(bits // 8, "big")
 
@@ -59,34 +56,29 @@ def _key_gen(path: str, bits: int):
         keys = load_json_file(path)
         return keys
     
-    if bits not in (512, 1024, 2048):
+    if bits not in (1024, 2048):
         print(f"Number of bits passed is wrong")
         return None
     
     while True:
         # this will take a long time to execute
-        p = randprime(2 ** (bits // 2 - 1), 2 ** (bits // 2) - 1)
-        q = randprime(2 ** (bits // 2 - 1), 2 ** (bits // 2) - 1)
-        n = p * q
-
-        if n.bit_length() == bits:
-            print(f"n is on {n.bit_length()} bits")
+        p = randprime(2 ** (bits - 1), 2 ** (bits) - 1)
+        if isprime((p - 1) // 2):
             break
-
-    phi = (p - 1) * (q - 1)
 
     while True:
-        e = randprime(2, phi)
-        if isprime(e) and gcd(e, phi) == 1:
+        # 1 < g < p - 1
+        g = randbelow(p - 3) + 2
+
+        if pow(g, 2, p) != 1 and pow(g, (p - 1) // 2, p) != 1:
             break
 
-    d = mod_inverse(e, phi)
+    s = randbelow(p - 2) + 1
+    y = pow(g, s, p)
 
     keys = {
-        "public": { "n": n, "e": e },
-        "private": { "n": n, "d": d }
+        "public": { "y": y, "p": p, "g": g },
+        "private": { "s": s, "p": p }
     }
 
     save_to_json_file(path, keys)
-
-    return keys
