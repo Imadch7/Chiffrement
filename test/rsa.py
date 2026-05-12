@@ -1,7 +1,63 @@
+import json
 from os.path import exists, splitext
+from os import makedirs
 from sympy import randprime, gcd, mod_inverse
 from sympy.ntheory import isprime
-from utils.file_handler import load_json_file, save_to_json_file
+
+def load_json_file(path):
+    """
+    Validates, opens, and parses a JSON file.
+    
+    Args:
+        path (str): The relative or absolute path to the file.
+        
+    Returns:
+        dict: The parsed JSON data, or an empty dict if an error occurs.
+    """
+
+    if not exists(path):
+        raise ValueError(f"File path {path} does not exist")
+
+    _, file_ext = splitext(path)
+    if not file_ext or file_ext.lower() != ".json":
+        raise ValueError(f"File {path}, is not a JSON file ❌")
+    
+    try:
+        with open(path, "r", encoding="utf-8") as file:
+            return json.load(file)
+        
+    except FileNotFoundError:
+        print(f"File {path} not found ❌")
+        return {}
+    
+    except json.JSONDecodeError as e:
+        print(f"File {path} contains invalid JSON format:{e} ❌")
+        return {}
+    
+    except PermissionError:
+        print(f"Permission to read {path} denied")
+        return {}
+    
+def save_to_json_file(path, data):
+    """
+    Saves data specifically in JSON format within the ./usr_data directory.
+    """
+
+    if not path:
+        raise ValueError(f"A file path must be passed, {path} not accepted")
+    
+    if data is None:
+        raise ValueError(f"Data must be passed.")
+    
+    if not exists("./output"):
+        makedirs("./output")
+        
+    try:
+        with open(path, "w") as file:
+            json.dump(data, file, indent=4)
+        
+    except PermissionError:
+        print(f"Permission to write to ({path}) has been denied")
 
 def rsa_encode(public_key: tuple[int] | None, message: str, bits: int, path_to_keys: str | None, to_str: bool = False):
     if bits not in (512, 1024, 2048):
@@ -22,7 +78,7 @@ def rsa_encode(public_key: tuple[int] | None, message: str, bits: int, path_to_k
         priv = keys["private"]
         n, e, d = pub.get("n"), pub.get("e"), priv.get("d")
     else:
-        n, e, d = public_key
+        n, e = public_key
 
     M = int.from_bytes(msg_bytes, "big")
 
@@ -43,10 +99,11 @@ def rsa_decode(private_key: tuple[int] | None, cipher, bits: int, to_str: bool =
     
     if isinstance(cipher, str):
         cipher_bytes = bytes.fromhex(cipher)
+        C = int.from_bytes(cipher_bytes, "big")
+    elif isinstance(cipher, bytes):
+        C = int.from_bytes(cipher, "big")
     else:
-        cipher_bytes = cipher
-
-    C = int.from_bytes(cipher_bytes, "big")
+        C = cipher
 
     M = pow(C, d, n)
 
@@ -103,3 +160,17 @@ def _key_gen(path: str, bits: int):
     save_to_json_file(path, keys)
 
     return keys
+
+
+
+
+
+
+
+cipher, keys, bits = rsa_encode(None, "KFNSIENCLKNFLKRFDSMCLERNFLKDSCRLNRENGTRCSelwkenfemflreknglkermflkernlkfrnferflernflkremglktnrglkeflkrenetmrlkngotrngskdmflrengltnDCRKLENGERJCELFNERVNREREV", 2048, "keys.json", True)
+n, e, d = keys
+
+print(f"rsa encode result {cipher}")
+
+text, bits_ = rsa_decode((n, d), cipher, bits, True)
+print(f"rsa decode result {text}")

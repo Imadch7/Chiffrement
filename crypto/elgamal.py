@@ -1,4 +1,4 @@
-from os.path import exists
+from os.path import exists, splitext
 from secrets import randbelow
 from sympy import randprime, mod_inverse
 from sympy.ntheory import isprime
@@ -20,16 +20,17 @@ def elgamal_encode(public_key: tuple[int] | None, message: str, bits: int, path_
         if not keys:
             return
         pub = keys["public"]
-        y, p, g = pub.get("y"), pub.get("p"), pub.get("g")
+        priv = keys["private"]
+        y, p, g, s = pub.get("y"), pub.get("p"), pub.get("g"), priv.get("s")
     else:
-        y, p, g = public_key
+        y, p, g, s = public_key
 
     k = randbelow(p - 2) + 1
     C1 = pow(g, k, p)
     M = int.from_bytes(msg_bytes, "big")
     C2 = (M * pow(y, k, p))  % p
 
-    return C1, C2
+    return (C1, C2), (y, p, g, s)
 
 def elgamal_decode(private_key: tuple[int] | None, C1, C2, bits: int, to_str: bool = False):
     if bits not in (512, 1024, 2048):
@@ -51,14 +52,25 @@ def elgamal_decode(private_key: tuple[int] | None, C1, C2, bits: int, to_str: bo
     return (decrypted_bytes.lstrip(b'\x00').decode("utf-8") if to_str else M), bits
 
 def _key_gen(path: str, bits: int):
-    if exists(path):
-        print(f"Keys already exist in {path}")
-        keys = load_json_file(path)
-        return keys
-    
     if bits not in (1024, 2048):
         print(f"Number of bits passed is wrong")
         return None
+    
+    if exists(path):
+        print(f"Keys already exist in {path}")
+        keys = load_json_file(path)
+
+        if keys.get("bits") == bits:
+            print(f"Compatible {bits}-bit keys already exist in {path}")
+            return keys
+        else:
+            base, ext = splitext(path)
+            path = f"{base}_{bits}{ext}"
+
+            if exists(path):
+                return load_json_file(path)
+            
+            print(f"Bit mismatch. Generating new {bits}-bit keys at {path}")
     
     while True:
         # this will take a long time to execute
