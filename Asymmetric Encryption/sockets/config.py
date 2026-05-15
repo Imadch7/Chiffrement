@@ -3,7 +3,10 @@
 # my ip structure is vlan_code:address
 import hashlib
 import os
+from dotenv import load_dotenv
 
+# Load environment variables from .env file
+load_dotenv(override=True)
 
 class Config:
     def __init__(self):
@@ -25,4 +28,5 @@ class Config:
                 
             }
         }
-        
+
+print(os.getenv('USERNAME'))
