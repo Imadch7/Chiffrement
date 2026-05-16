@@ -9,6 +9,7 @@ class Client:
         self.port = port
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connected = False
+        self.__Key = None  # Placeholder for client's key
 
     def connect(self):
         try:

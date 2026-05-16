@@ -59,12 +59,16 @@ def process_data():
             
             if op_name == 'SHA-256':
                 if sha256_mod:
+                    if isinstance(current_data, bytes):
+                        current_data = current_data.decode(errors='ignore')
                     current_data = sha256_mod.sha256(current_data)
                 else:
                     return jsonify({'error': 'SHA-256 module not loaded'}), 500
                     
             elif op_name == 'MD5':
                 if md5_mod:
+                    if isinstance(current_data, bytes):
+                        current_data = current_data.decode(errors='ignore')
                     current_data = md5_mod.md5(current_data)
                 else:
                     return jsonify({'error': 'MD5 module not loaded'}), 500
@@ -79,10 +83,13 @@ def process_data():
                     key = key[:16].encode()
                     
                     if isinstance(current_data, str):
-                        current_data = current_data.encode()
+                        try:
+                            current_data = bytes.fromhex(current_data)
+                        except ValueError:
+                            current_data = current_data.encode()
                         
                     encrypted_bytes = aes_instance.aes_encrypt(current_data, key)
-                    current_data = encrypted_bytes.hex()
+                    current_data = encrypted_bytes
                 else:
                     return jsonify({'error': 'AES module not loaded'}), 500
                     
@@ -105,7 +112,7 @@ def process_data():
                             current_data = current_data.encode()
                             
                     processed = e0.crypt(current_data)
-                    current_data = processed.hex()
+                    current_data = processed
                 else:
                     return jsonify({'error': 'Bluetooth E0 module not loaded'}), 500
                     
@@ -121,7 +128,7 @@ def process_data():
                             current_data = bytes.fromhex(current_data)
                         except ValueError:
                             current_data = current_data.encode()
-                    current_data = rc4_instance.rc4_encrypt(current_data, key).hex()
+                    current_data = rc4_instance.rc4_encrypt(current_data, key)
                 else:
                     return jsonify({'error': 'RC4 module not loaded'}), 500
                     
@@ -200,7 +207,11 @@ def process_data():
                             current_data = bytes.fromhex(current_data)
                         except ValueError:
                             current_data = current_data.encode()
-                    current_data = des_inst.des_encrypt(current_data, key)
+                    binary_str = des_inst.des_encrypt(current_data, key)
+                    b_arr = bytearray()
+                    for i in range(0, len(binary_str), 8):
+                        b_arr.append(int(binary_str[i:i+8].ljust(8, '0'), 2))
+                    current_data = bytes(b_arr)
                 else:
                     return jsonify({'error': 'DES module not loaded'}), 500
                     
@@ -243,6 +254,9 @@ def process_data():
             else:
                 return jsonify({'error': f'Unsupported operation: {op_name}'}), 400
                 
+        if isinstance(current_data, bytes):
+            current_data = current_data.hex()
+            
         return jsonify({
             'success': True,
             'output': current_data
