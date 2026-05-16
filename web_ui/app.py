@@ -22,8 +22,8 @@ def load_module_from_path(module_name, file_path):
         return None
 
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sym_dir = os.path.join(base_dir, 'Symmetric Encryption')
-asym_dir = os.path.join(base_dir, 'Asymmetric Encryption')
+sym_dir = os.path.join(base_dir, 'Symmetric_Encryption')
+asym_dir = os.path.join(base_dir, 'Asymmetric_Encryption')
 
 # Load the available algorithms
 aes_mod = load_module_from_path('aes_mod', os.path.join(sym_dir, 'aes.py'))

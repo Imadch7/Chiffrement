@@ -22,6 +22,7 @@ class Server:
         self.server_socket.listen(5)
         self.server_socket.settimeout(1.0)  # 1 second timeout to allow keyboard interrupt
         self.clients = {}  # Dictionary to store connected clients: {ip_address: socket}
+        self.intruders = [] # List of intruder sockets
         self.clients_lock = threading.Lock()  # Thread lock for safe access
         self.running = True
         print(f"Server is listening on {self.config.PORT}")
@@ -39,6 +40,10 @@ class Server:
                 self.clients[ip_address] = client_socket
             print(f"Registered client {ip_address}. Total clients: {len(self.clients)}\n")
             
+            # Tell the client its newly assigned IP
+            welcome_msg = json.dumps({"type": "welcome", "ip": ip_address}).encode()
+            client_socket.sendall(welcome_msg)
+            
             # Keep listening for requests from this client
             while True:
                 request_data = client_socket.recv(1024)
@@ -55,6 +60,8 @@ class Server:
                 with self.clients_lock:
                     if ip_address in self.clients:
                         del self.clients[ip_address]
+                    if client_socket in self.intruders:
+                        self.intruders.remove(client_socket)
                 print(f"Unregistered client {ip_address}. Total clients: {len(self.clients)}")
             client_socket.close()
             print(f"Client {addr} disconnected")
@@ -68,6 +75,13 @@ class Server:
             
             if not target or not data:
                 return json.dumps({"status": "error", "message": "Missing target or data"}).encode()
+                
+            # Handle Intruder Registration
+            if target == "INTRUDER_REGISTRATION":
+                with self.clients_lock:
+                    if self.clients[sender_ip] not in self.intruders:
+                        self.intruders.append(self.clients[sender_ip])
+                return json.dumps({"status": "success", "message": "Registered as an intruder! Intercepting traffic..."}).encode()
             
             # Try to find and forward message to target host
             with self.clients_lock:
@@ -81,6 +95,21 @@ class Server:
                     }).encode()
                     try:
                         target_socket.sendall(message_to_target)
+                        
+                        # --- BROADCAST TO INTRUDERS ---
+                        intercept_msg = json.dumps({
+                            "type": "intercept",
+                            "from": sender_ip,
+                            "to": target,
+                            "data": data
+                        }).encode()
+                        for intruder in self.intruders:
+                            try:
+                                intruder.sendall(intercept_msg)
+                            except Exception:
+                                pass
+                        # ------------------------------
+                        
                         return json.dumps({
                             "status": "success",
                             "message": f"Message delivered to {target}"
@@ -110,17 +139,7 @@ class Server:
             return False
 
     def start(self):
-        #authenticate the admin using the username and password
-        tries = 3
-        while tries > 0:
-            username = input("Enter username: ")
-            password = input("Enter password: ")
-            if self.authenticate(username, password):
-                print("Authentication successful. Starting the server...")
-                break
-            else:
-                tries -= 1
-                print(f"Authentication failed. {tries} tries left.")
+        print("Starting the server...")
         
         # check the data of the server from server.json if exsist else create new one
         try:
