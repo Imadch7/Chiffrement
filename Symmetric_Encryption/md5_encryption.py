@@ -63,9 +63,4 @@ def md5(message):
 def rotate(x, n):
     return ((x << n) | (x >> (32 - n))) & 0xFFFFFFFF
 
-def main():
-    message = input("Enter the message to encrypt: ")
-    print(md5(message))
 
-if __name__ == "__main__":
-    main()

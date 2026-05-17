@@ -3,24 +3,17 @@
 # my ip structure is vlan_code:address
 import hashlib
 import os
+import dotenv
 
+dotenv.load_dotenv()
 
 class Config:
     def __init__(self):
-        # Load .env file manually if it exists
-        if os.path.exists('.env'):
-            with open('.env', 'r') as f:
-                for line in f:
-                    line = line.strip()
-                    if '=' in line and not line.startswith('#'):
-                        key, val = line.split('=', 1)
-                        os.environ[key] = val
-
-        self.PORT = int(os.getenv('PORT', '54321'))
-        self.BUFFER_SIZE = int(os.getenv('BUFFER_SIZE', '1024'))
-        self.USERNAME = os.getenv('USERNAME', 'admin')
-        self.__PASSWORD = os.getenv('PASSWORD', 'admin123')
-        self.SERVER_IP = os.getenv('SERVER_IP', '127.0.0.1')
+        self.PORT = int(os.getenv('PORT'))
+        self.BUFFER_SIZE = int(os.getenv('BUFFER_SIZE'))
+        self.USERNAME = os.getenv('USERNAME')
+        self.__PASSWORD = os.getenv('PASSWORD')
+        self.SERVER_IP = os.getenv('SERVER_IP')
 
     def server_json(self):
         return {
@@ -34,4 +27,5 @@ class Config:
                 
             }
         }
+
         

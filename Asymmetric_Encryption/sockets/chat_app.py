@@ -26,6 +26,10 @@ rc4_path = os.path.join(grandparent_dir, 'Symmetric_Encryption', 'rc4.py')
 
 dh_mod = load_module_from_path('dh_mod', dh_path)
 rc4_mod = load_module_from_path('rc4_mod', rc4_path)
+rsa_path = os.path.join(grandparent_dir, 'Asymmetric_Encryption', 'rsa_pss.py')
+rsa_mod = load_module_from_path('rsa_mod', rsa_path)
+
+import signature
 
 app = Flask(__name__)
 CORS(app)
@@ -44,6 +48,10 @@ class ChatState:
         self.dh_instance = dh_mod.DiffieHellman(bits=128)
         self.rc4_instance = rc4_mod.RC4()
         self.shared_secrets = {} # target_ip -> secret_key (bytes)
+        
+        # RSA keys for signing
+        self.rsa_pub, self.rsa_priv = rsa_mod.generate_keypair(1024)
+        self.peer_rsa_pubs = {} # target_ip -> rsa_pub
         
     def connect(self, host, port):
         if self.connected:
@@ -90,6 +98,9 @@ class ChatState:
                                 p = int(parts[2])
                                 g = int(parts[3])
                                 
+                                if len(parts) >= 6:
+                                    self.peer_rsa_pubs[sender] = (int(parts[4]), int(parts[5]))
+                                
                                 # CRITICAL: We MUST use the sender's P and G to compute the identical shared secret
                                 specific_dh = dh_mod.DiffieHellman(p=p, g=g)
                                 shared = specific_dh.generate_shared_secret(pub_key)
@@ -97,24 +108,48 @@ class ChatState:
                                 self.shared_secrets[sender] = key_bytes
                                 
                                 # Send reply using the new public key generated for this specific P and G
-                                self.send_raw(sender, f"DH_PUB_KEY_REPLY:{specific_dh.public_key}")
-                                self.messages.append({"from": "System", "text": f"🔑 Secure E2E channel established with {sender}!"})
+                                reply_msg = f"DH_PUB_KEY_REPLY:{specific_dh.public_key}:{self.rsa_pub[0]}:{self.rsa_pub[1]}"
+                                self.send_raw(sender, reply_msg)
+                                self.messages.append({"from": "System", "text": f"Secure E2E channel established with {sender}!"})
                                 
                             elif data_hex.startswith("DH_PUB_KEY_REPLY:"):
                                 parts = data_hex.split(":")
                                 pub_key = int(parts[1])
+                                if len(parts) >= 4:
+                                    self.peer_rsa_pubs[sender] = (int(parts[2]), int(parts[3]))
+                                    
                                 shared = self.dh_instance.generate_shared_secret(pub_key)
                                 key_bytes = hashlib.sha256(str(shared).encode()).digest()[:16]
                                 self.shared_secrets[sender] = key_bytes
-                                self.messages.append({"from": "System", "text": f"🔑 Secure E2E channel established with {sender}!"})
+                                self.messages.append({"from": "System", "text": f"Secure E2E channel established with {sender}!"})
                                 
                             else:
                                 # Decrypt Chat Message
                                 if sender in self.shared_secrets:
                                     key = self.shared_secrets[sender]
-                                    ciphertext = bytes.fromhex(data_hex)
-                                    plaintext = self.rc4_instance.rc4_decrypt(ciphertext, key).decode('utf-8', errors='ignore')
-                                    self.messages.append({"from": sender, "text": plaintext})
+                                    peer_rsa_pub = self.peer_rsa_pubs.get(sender)
+                                    
+                                    if data_hex.startswith("SIG_MSG:"):
+                                        parts = data_hex.split(":", 2)
+                                        if len(parts) == 3:
+                                            hash_val = parts[1]
+                                            encrypted_msg = parts[2]
+                                            
+                                            decrypt_func = lambda enc_bytes: self.rc4_instance.rc4_decrypt(enc_bytes, key)
+                                            sig_handler = signature.Signature(private_key=self.rsa_priv, public_key=peer_rsa_pub, decrypt_algo=decrypt_func)
+                                            
+                                            is_valid, result = sig_handler.verify(encrypted_msg, hash_val)
+                                            
+                                            if is_valid:
+                                                self.messages.append({"from": sender, "text": f"{result}"})
+                                            else:
+                                                self.messages.append({"from": "System", "text": f"⚠️ Security Warning: {result}"})
+                                        else:
+                                            self.messages.append({"from": "System", "text": "⚠️ Invalid signed message format!"})
+                                    else:
+                                        ciphertext = bytes.fromhex(data_hex)
+                                        plaintext = self.rc4_instance.rc4_decrypt(ciphertext, key).decode('utf-8', errors='ignore')
+                                        self.messages.append({"from": sender, "text": plaintext})
                                 else:
                                     self.messages.append({"from": "System", "text": f"⚠️ Encrypted message from {sender} but no key established!"})
                         else:
@@ -141,14 +176,21 @@ class ChatState:
         
         if target not in self.shared_secrets:
             # Initiate key exchange
-            msg = f"DH_PUB_KEY:{self.dh_instance.public_key}:{self.dh_instance.p}:{self.dh_instance.g}"
+            msg = f"DH_PUB_KEY:{self.dh_instance.public_key}:{self.dh_instance.p}:{self.dh_instance.g}:{self.rsa_pub[0]}:{self.rsa_pub[1]}"
             self.send_raw(target, msg)
             self.messages.append({"from": "System", "text": f"Initiating secure channel with {target}... Send your message again."})
             return False
             
         key = self.shared_secrets[target]
-        ciphertext = self.rc4_instance.rc4_encrypt(plaintext.encode(), key)
-        self.send_raw(target, ciphertext.hex())
+        peer_rsa_pub = self.peer_rsa_pubs.get(target)
+        
+        encrypt_func = lambda msg_bytes: self.rc4_instance.rc4_encrypt(msg_bytes, key)
+        sig_handler = signature.Signature(private_key=self.rsa_priv, public_key=peer_rsa_pub, encrypt_algo=encrypt_func)
+        
+        encrypted_hex, hash_val = sig_handler.sign(plaintext)
+        
+        final_payload = f"SIG_MSG:{hash_val}:{encrypted_hex}"
+        self.send_raw(target, final_payload)
         self.messages.append({"from": "Me", "target": target, "text": plaintext})
         return True
 

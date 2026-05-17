@@ -77,10 +77,4 @@ def sha256(message):
         
     return ''.join(f'{val:08x}' for val in h)
 
-def main():
-    message = input("Enter the message to hash with SHA-256: ")
-    print("SHA-256 Hash:")
-    print(sha256(message))
 
-if __name__ == "__main__":
-    main()

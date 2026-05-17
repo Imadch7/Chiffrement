@@ -32,6 +32,7 @@ class DES:
             kkey = [round_key[i] for i in range(56) if i not in [9,18,22,25,35,38,43,54]]
             round_keys.append(kkey)
         return round_keys
+    
     def generate_initial_permutation_table(self):
         # Initial Permutation table for DES
         return [58, 50, 42, 34, 26, 18, 10, 2,
@@ -42,6 +43,16 @@ class DES:
                 59, 51, 43, 35, 27, 19,11 ,3,
                 61, 53,45 ,37 ,29 ,21 ,13 ,5,
                 63 ,55 ,47 ,39 ,31 ,23 ,15 ,7]
+    
+    def final_permutation(self):
+        return [40, 8, 48, 16, 56, 24, 64, 32,
+                39, 7, 47, 15, 55, 23, 63, 31,
+                38, 6, 46, 14, 54, 22, 62, 30,
+                37, 5, 45, 13, 53, 21, 61, 29,
+                36, 4, 44, 12, 52, 20, 60, 28,
+                35, 3, 43,11 ,51 ,19 ,59 ,27,
+                34 ,2 ,42 ,10 ,50 ,18 ,58 ,26,
+                33 ,1 ,41 ,9 ,49 ,17 ,57 ,25]
     
     def expansion(self, right_half):
         # list of 4 bits x 8
@@ -117,14 +128,7 @@ class DES:
                 new_right_half = ''.join(['1' if left_half[i] != permuted_right_half[i] else '0' for i in range(len(left_half))])
                 left_half, right_half = right_half, new_right_half
             # Final Permutation (inverse of initial permutation)
-            final_permutation_table = [40, 8, 48, 16, 56, 24, 64, 32,
-                                    39, 7, 47, 15, 55, 23, 63, 31,
-                                    38, 6, 46, 14, 54, 22, 62, 30,
-                                    37, 5, 45, 13, 53, 21, 61, 29,
-                                    36, 4, 44, 12, 52, 20, 60, 28,
-                                    35, 3, 43,11 ,51 ,19 ,59 ,27,
-                                    34 ,2 ,42 ,10 ,50 ,18 ,58 ,26,
-                                    33 ,1 ,41 ,9 ,49 ,17 ,57 ,25]
+            final_permutation_table = self.final_permutation()
             combined = right_half + left_half
             ciphertext = ''.join([combined[i-1] for i in final_permutation_table])
             return ciphertext
